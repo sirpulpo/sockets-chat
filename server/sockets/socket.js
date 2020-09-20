@@ -20,10 +20,10 @@ io.on('connection', (client) => {
         users.agregarPersona(client.id, user.nombre, user.sala);
 
         client.broadcast.to(user.sala)
-            .emit('listaPersonas', {
-                personas: users.getPersonasPorSala(user.sala),
-                sala: user.sala
-            });
+            .emit('listaPersonas', users.getPersonasPorSala(user.sala));
+
+        client.broadcast.to(user.sala)
+            .emit('crearMsg', crearMsg('Admin', `${user.nombre} se unió`));
 
         callback(users.getPersonasPorSala(user.sala));
     });
@@ -33,21 +33,20 @@ io.on('connection', (client) => {
         let personaDltd = users.borrarPersona(client.id);
 
         client.broadcast.to(personaDltd.sala)
-            .emit('crearMsg', crearMsg('Admin', `${personaDltd.nombre} salió de la sala: ${personaDltd.sala}`));
+            .emit('crearMsg', crearMsg('Admin', `${personaDltd.nombre} salió`));
 
         client.broadcast.to(personaDltd.sala)
-            .emit('listaPersonas', {
-                personas: users.getPersonasPorSala(personaDltd.sala),
-                sala: personaDltd.sala
-            });
+            .emit('listaPersonas', users.getPersonasPorSala(personaDltd.sala));
     });
 
 
-    client.on('crearMsg', (data) => {
+    client.on('crearMsg', (data, callback) => {
         let persona = users.getPersona(client.id);
         let msg = crearMsg(persona.nombre, data.msg);
 
         client.broadcast.to(persona.sala).emit('crearMsg', msg);
+
+        callback(msg);
     });
 
 
